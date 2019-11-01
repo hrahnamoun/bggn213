@@ -1,0 +1,126 @@
+---
+title: "Class9_hands on"
+author: "Homa Rahnamoun"
+date: "10/30/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+wisc.df <- read.csv("WisconsinCancer.csv")
+```
+
+here we examine data from `r nrow(wisc.df)` patient samples
+
+```{r}
+x <- table(wisc.df$diagnosis)
+x
+```
+
+In this data-set we have `r x["M"]` cancer and `r x["B"]` non cancer samples
+
+```{r}
+#how many variables/features are suffixed with _mean?
+colnames(wisc.df)
+
+grep("_mean", colnames(wisc.df))
+length(grep("_mean", colnames(wisc.df)))
+```
+
+```{r}
+wisc.data <- as.matrix(wisc.df[, 3:32]) #to get rid of the inappropriate/columns
+# Set the row names of wisc.data
+row.names(wisc.data) <- wisc.df$id
+#head(wisc.data)
+diagnosis <- c(wisc.df$diagnosis)
+
+round(apply(wisc.data, 2, sd),3) # given the wide range of data (bc they can be percieved as signiicant), set scale to TRUE #std dev over column 2 of wisc.data 
+```
+looks like we need to use `scale=TRUE`  here as our data are all over the shop...
+
+```{r}
+# Perform PCA on wisc.data by completing the following code
+wisc.pr <- prcomp(wisc.data, scale=TRUE)
+summary(wisc.pr) #need 7 PCs to explain 90% of data
+```
+```{r}
+#withoutcolor
+plot(wisc.pr$x[,1], wisc.pr$x[,2])
+
+
+#with color
+plot(wisc.pr$x[,1:2], col= wisc.df$diagnosis)
+```
+```{r}
+#PC1 vs PC3
+plot(wisc.pr$x[,1], wisc.pr$x[,3], col= wisc.df$diagnosis)
+```
+```{r}
+x <- summary(wisc.pr)
+
+```
+```{r}
+x$importance[, "PC1"]
+```
+
+the first PC captures `r x$importance[2,"PC1"] *100` of the original variance in the dataset
+```{r}
+#how many PCs are required to describe at least 70% of the original variance in the data?
+
+which (x$importance[3,] >0.7)[1]
+```
+```{r}
+# Calculate variance of each component
+pr.var <- wisc.pr$sdev^2
+head(pr.var)
+```
+section 3:
+
+```{r}
+data.scaled <- scale(wisc.data)
+
+data.dist <- dist(data.scaled)
+
+```
+```{r}
+hclust (data.dist, method = "complete")
+```
+
+```{r}
+hcluster <-(hclust (data.dist, method = "complete"))
+plot(hcluster)
+
+abline(h=19, col="red")
+```
+```{r}
+wisc.hclust.clusters <- cutree(hcluster, k=4)
+```
+
+```{r}
+table(wisc.hclust.clusters, diagnosis)
+```
+
+
+
+```{r}
+wisc.pr.hclust <-(hclust (data.dist, method = "ward.D2"))
+plot(wisc.pr.hclust, wisc.pr$x[,7])
+```
+
+
+
+```{r}
+
+grps <- cutree(wisc.pr.hclust, k=2)
+table(grps)
+```
+```{r}
+table(grps, diagnosis)
+```
+```{r}
+plot(wisc.pr$x[,1:2], col=grps)
+```
+
